@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站收藏管理器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary-color: #8b5cf6;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --success-color: #10b981;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        /* Bookmark Grid */
+        .bookmarks-container {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+            min-height: 400px;
+        }
+
+        .bookmarks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .bookmark-card {
+            background: var(--surface);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .bookmark-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-color);
+        }
+
+        .bookmark-card:hover .bookmark-actions {
+            opacity: 1;
+        }
+
+        .bookmark-favicon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .bookmark-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bookmark-url {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bookmark-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .bookmark-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .bookmark-actions {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .icon-btn.edit {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+        }
+
+        .icon-btn.edit:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .icon-btn.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .icon-btn.delete:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 2px solid var(--border-color);
+            background: var(--surface);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .page-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input:disabled {
+            background: var(--background);
+            cursor: not-allowed;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        /* Confirm Dialog */
+        .confirm-dialog {
+            max-width: 400px;
+        }
+
+        .confirm-message {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+                margin-bottom: 16px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .bookmarks-container {
+                padding: 16px;
+            }
+
+            .bookmarks-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .modal-content {
+                padding: 24px;
+            }
+
+            .modal-header {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-btn {
+                min-width: 36px;
+                height: 36px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔖 网站收藏管理器</h1>
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索网站名称、网址或标签...">
+                    <button class="btn btn-primary" onclick="searchBookmarks()">🔍 搜索</button>
+                </div>
+                <button class="btn btn-success" onclick="openAddModal()">➕ 添加网址</button>
+                <button class="btn btn-secondary" onclick="exportToExcel()">📊 导出Excel</button>
+            </div>
+        </div>
+
+        <!-- Bookmarks Container -->
+        <div class="bookmarks-container">
+            <div id="bookmarksGrid" class="bookmarks-grid"></div>
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="bookmarkModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-header" id="modalTitle">添加网址</h2>
+            <form id="bookmarkForm" onsubmit="saveBookmark(event)">
+                <input type="hidden" id="bookmarkId">
+
+                <div class="form-group">
+                    <label class="form-label">网站名称</label>
+                    <input type="text" class="form-input" id="bookmarkName" required placeholder="输入网站名称">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">网址</label>
+                    <input type="url" class="form-input" id="bookmarkUrl" required placeholder="https://example.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">分类标签</label>
+                    <input type="text" class="form-input" id="bookmarkTag" placeholder="如：开发工具、设计资源">
+                </div>
+
+                <div class="form-group" id="dateGroup" style="display: none;">
+                    <label class="form-label">创建日期</label>
+                    <input type="text" class="form-input" id="bookmarkDate" disabled>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">💾 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirmDialog" class="modal">
+        <div class="modal-content confirm-dialog">
+            <h2 class="modal-header">确认删除</h2>
+            <p class="confirm-message">确定要删除这个书签吗？此操作无法撤销。</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeConfirmDialog()">取消</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IndexedDB 配置
+        const DB_NAME = 'BookmarkManagerDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'bookmarks';
+        let db;
+        let currentPage = 1;
+        let itemsPerPage = 12;
+        let allBookmarks = [];
+        let filteredBookmarks = [];
+        let deleteId = null;
+
+        // 初始化数据库
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        objectStore.createIndex('name', 'name', { unique: false });
+                        objectStore.createIndex('url', 'url', { unique: false });
+                        objectStore.createIndex('tag', 'tag', { unique: false });
+                        objectStore.createIndex('createdAt', 'createdAt', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // 添加或更新书签
+        function addOrUpdateBookmark(bookmark) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = bookmark.id ? store.put(bookmark) : store.add(bookmark);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // 获取所有书签
+        function getAllBookmarks() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // 删除书签
+        function deleteBookmark(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // 获取书签首字母
+        function getInitial(name) {
+            return name ? name.charAt(0).toUpperCase() : '?';
+        }
+
+        // 渲染书签卡片
+        function renderBookmarks() {
+            const grid = document.getElementById('bookmarksGrid');
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageBookmarks = filteredBookmarks.slice(start, end);
+
+            if (pageBookmarks.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">📭</div>
+                        <div class="empty-state-text">暂无收藏的网站</div>
+                    </div>
+                `;
+                renderPagination();
+                return;
+            }
+
+            grid.innerHTML = pageBookmarks.map(bookmark => `
+                <div class="bookmark-card" onclick="openBookmark(${bookmark.id}, '${bookmark.url}')">
+                    <div class="bookmark-actions">
+                        <button class="icon-btn edit" onclick="event.stopPropagation(); openEditModal(${bookmark.id})" title="编辑">✏️</button>
+                        <button class="icon-btn delete" onclick="event.stopPropagation(); openDeleteDialog(${bookmark.id})" title="删除">🗑️</button>
+                    </div>
+                    <div class="bookmark-favicon">${getInitial(bookmark.name)}</div>
+                    <div class="bookmark-title" title="${bookmark.name}">${bookmark.name}</div>
+                    <div class="bookmark-url" title="${bookmark.url}">${bookmark.url}</div>
+                    ${bookmark.tag ? `<span class="bookmark-tag">${bookmark.tag}</span>` : ''}
+                    <div class="bookmark-date">📅 ${bookmark.createdAt}</div>
+                </div>
+            `).join('');
+
+            renderPagination();
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredBookmarks.length / itemsPerPage);
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+
+            // 上一页
+            html += `<button class="page-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+
+            // 页码
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<button class="page-btn" disabled>...</button>`;
+                }
+            }
+
+            // 下一页
+            html += `<button class="page-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>›</button>`;
+
+            pagination.innerHTML = html;
+        }
+
+        // 切换页面
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredBookmarks.length / itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderBookmarks();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 搜索书签
+        function searchBookmarks() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            if (!searchTerm) {
+                filteredBookmarks = [...allBookmarks];
+            } else {
+                filteredBookmarks = allBookmarks.filter(bookmark =>
+                    bookmark.name.toLowerCase().includes(searchTerm) ||
+                    bookmark.url.toLowerCase().includes(searchTerm) ||
+                    (bookmark.tag && bookmark.tag.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            currentPage = 1;
+            renderBookmarks();
+        }
+
+        // 打开添加模态框
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = '添加网址';
+            document.getElementById('bookmarkForm').reset();
+            document.getElementById('bookmarkId').value = '';
+            document.getElementById('dateGroup').style.display = 'none';
+            document.getElementById('bookmarkModal').classList.add('active');
+        }
+
+        // 打开编辑模态框
+        async function openEditModal(id) {
+            const bookmark = allBookmarks.find(b => b.id === id);
+            if (!bookmark) return;
+
+            document.getElementById('modalTitle').textContent = '编辑网址';
+            document.getElementById('bookmarkId').value = bookmark.id;
+            document.getElementById('bookmarkName').value = bookmark.name;
+            document.getElementById('bookmarkUrl').value = bookmark.url;
+            document.getElementById('bookmarkTag').value = bookmark.tag || '';
+            document.getElementById('bookmarkDate').value = bookmark.createdAt;
+            document.getElementById('dateGroup').style.display = 'block';
+            document.getElementById('bookmarkModal').classList.add('active');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('bookmarkModal').classList.remove('active');
+        }
+
+        // 保存书签
+        async function saveBookmark(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('bookmarkId').value;
+            const name = document.getElementById('bookmarkName').value.trim();
+            const url = document.getElementById('bookmarkUrl').value.trim();
+            const tag = document.getElementById('bookmarkTag').value.trim();
+
+            // 格式化日期：年-月-日 时:分
+            const now = new Date();
+            const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const bookmark = {
+                name,
+                url,
+                tag,
+                createdAt: id ? document.getElementById('bookmarkDate').value : createdAt
+            };
+
+            if (id) {
+                bookmark.id = parseInt(id);
+            }
+
+            await addOrUpdateBookmark(bookmark);
+            await loadBookmarks();
+            closeModal();
+        }
+
+        // 打开书签
+        function openBookmark(id, url) {
+            window.open(url, '_blank');
+        }
+
+        // 打开删除对话框
+        function openDeleteDialog(id) {
+            deleteId = id;
+            document.getElementById('confirmDialog').classList.add('active');
+        }
+
+        // 关闭删除对话框
+        function closeConfirmDialog() {
+            deleteId = null;
+            document.getElementById('confirmDialog').classList.remove('active');
+        }
+
+        // 确认删除
+        async function confirmDelete() {
+            if (deleteId) {
+                await deleteBookmark(deleteId);
+                await loadBookmarks();
+                closeConfirmDialog();
+            }
+        }
+
+        // 导出到Excel
+        function exportToExcel() {
+            if (allBookmarks.length === 0) {
+                alert('没有数据可以导出！');
+                return;
+            }
+
+            // 创建CSV内容
+            let csv = '\uFEFF'; // UTF-8 BOM
+            csv += 'ID,网站名称,网址,分类标签,创建日期\n';
+
+            allBookmarks.forEach(bookmark => {
+                csv += `${bookmark.id},"${bookmark.name}","${bookmark.url}","${bookmark.tag || ''}","${bookmark.createdAt}"\n`;
+            });
+
+            // 创建下载链接
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+
+            link.setAttribute('href', url);
+            link.setAttribute('download', `网站收藏_${new Date().getTime()}.csv`);
+            link.style.display = 'none';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 加载书签
+        async function loadBookmarks() {
+            allBookmarks = await getAllBookmarks();
+            allBookmarks.sort((a, b) => b.id - a.id); // 按ID降序排列
+            filteredBookmarks = [...allBookmarks];
+            currentPage = 1;
+            renderBookmarks();
+        }
+
+        // 回车搜索
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchBookmarks();
+                }
+            });
+        });
+
+        // 初始化应用
+        (async function init() {
+            try {
+                await initDB();
+                await loadBookmarks();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                alert('应用初始化失败，请刷新页面重试');
+            }
+        })();
+    </script>
+</body>
+</html>
